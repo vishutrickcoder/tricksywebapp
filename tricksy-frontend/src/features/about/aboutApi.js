@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const aboutApi = createApi({
   reducerPath: "aboutApi",
   baseQuery: fetchBaseQuery({
-     baseUrl: "http://localhost:5000/api", // backend URL
+     baseUrl: "https://tricksywebapp.onrender.com/api", // backend URL
      credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth.accessToken;
