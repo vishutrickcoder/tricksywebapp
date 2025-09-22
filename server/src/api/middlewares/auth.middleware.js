@@ -17,7 +17,6 @@ function authMiddleware(requiredRoles = []) {
             if (requiredRoles.length && !requiredRoles.some(r => payload.roles.includes(r))) return res.status(403).json({ error: 'Forbidden' });
 
 
-            // If admin route always require 2FA checked
             if (requiredRoles.includes('admin')) {
                 // In a robust system we would check last 2FA time or step-up auth. For now ensure user.twoFA.enabled
                 // (Assumes a user load or a claim indicates 2FA completed in session)
@@ -31,5 +30,4 @@ function authMiddleware(requiredRoles = []) {
     };
 }
 
-
-module.exports = authMiddleware;
+export default authMiddleware;

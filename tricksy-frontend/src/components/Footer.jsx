@@ -12,22 +12,16 @@ export default function Footer() {
   return (
     <footer
       style={{ backgroundColor: PALETTE.bgDark }}
-      className="w-full py-8 px-6 mt-20"
+      className="w-full py-4 px-3 mt-20"
     >
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="mb-6 md:mb-0 flex items-center">
           <img
-            src="/logo.png"
+            src="/logo.jpeg"
             alt="Tricksy Logo"
-            className="h-10 w-auto mr-3"
+            className="h-16 w-auto mr-3"
             style={{ filter: `drop-shadow(0 2px 6px ${PALETTE.primary}88)` }}
           />
-          <span
-            style={{ color: PALETTE.textLight, letterSpacing: "0.05em" }}
-            className="text-lg font-semibold select-none"
-          >
-            Tricksy
-          </span>
         </div>
         <p
           style={{ color: PALETTE.textMuted }}

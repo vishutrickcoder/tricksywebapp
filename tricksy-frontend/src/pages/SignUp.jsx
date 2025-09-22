@@ -250,9 +250,10 @@ export default function SignUp() {
     setErrorMsg("");
     try {
       const res = await signup({ email, phone, password }).unwrap();
-      if (res.success) {
+      console.log(res);
+      // if (res.success) {
         navigate("/verify-otp");
-      }
+      // }
     } catch (err) {
       console.error("Signup failed", err);
       setErrorMsg(err?.data?.error || "Signup failed. Try again.");

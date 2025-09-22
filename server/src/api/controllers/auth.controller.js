@@ -22,10 +22,10 @@ export const register = expressAsyncHandler(async (req, res) => {
         const existing = await User.findOne({ email });
         if (existing) return res.status(409).json({ error: 'Email already registered' });
     }
-    if (phone) {
-        const existingP = await User.findOne({ phone: phone });
-        if (existingP) return res.status(409).json({ error: 'Phone already registered' });
-    }
+    // if (phone) {
+    //     const existingP = await User.findOne({ phone: phone });
+    //     if (existingP) return res.status(409).json({ error: 'Phone already registered' });
+    // }
 
 
     const passwordHash = await AuthSvc.hashPassword(password);
@@ -94,27 +94,38 @@ export const login = expressAsyncHandler(async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-
     // reset attempts
     user.loginAttempts = 0; user.lockUntil = null; await user.save();
 
 
     // trigger 2FA flow if enabled or admin
-    if (user.twoFA.enabled || user.roles.includes('admin')) {
-        // create a short-lived OTP for second factor
-        const otpPlain = (Math.floor(100000 + Math.random() * 900000)).toString();
-        await AuthSvc.createOtp(user.email || user.getDecryptedPhone(), otpPlain, 'login');
-        if (user.email) await sendEmailOtp(user.email, otpPlain);
-        if (user.getDecryptedPhone()) await sendSmsOtp(user.getDecryptedPhone(), otpPlain);
-        return res.json({ twoFARequired: true, message: '2FA code sent' });
-    }
+    // if (user.twoFA.enabled || user.roles.includes('admin')) {
+    //     // create a short-lived OTP for second factor
+    //     const otpPlain = (Math.floor(100000 + Math.random() * 900000)).toString();
+    //     await AuthSvc.createOtp(user.email || user.getDecryptedPhone(), otpPlain, 'login');
+    //     if (user.email) await sendEmailOtp(user.email, otpPlain);
+    //     // if (user.getDecryptedPhone()) await sendSmsOtp(user.getDecryptedPhone(), otpPlain);
+    //     return res.json({ twoFARequired: true, message: '2FA code sent' });
+    // }
 
 
     // issue tokens
     const accessToken = AuthSvc.generateAccessToken(user);
     const refreshToken = await AuthSvc.createAndStoreRefreshToken(user, req.ip, req.get('User-Agent'));
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 30 * 24 * 3600 * 1000 });
-    return res.json({ accessToken });
+
+      const safeUser = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    roles: user.roles,
+    twoFA: user.twoFA,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+
+    return res.json({user: safeUser , accessToken });
 });
 
 
@@ -127,11 +138,33 @@ export const logout = expressAsyncHandler(async (req, res) => {
 });
 
 
+// // GET /auth/profile
+// export const profile = expressAsyncHandler(async (req, res) => {
+//     const user = await User.findById(req.user.sub).select('-passwordHash -twoFA.totpSecret');
+//     return res.json({ user });
+// });
+
 // GET /auth/profile
 export const profile = expressAsyncHandler(async (req, res) => {
+  try {
+    // Make sure req.user exists and has the correct structure
+    if (!req.user || !req.user.sub) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const user = await User.findById(req.user.sub).select('-passwordHash -twoFA.totpSecret');
-    return res.json({ user });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    return res.json(user); // Return user directly, not wrapped in object
+  } catch (error) {
+    console.error('Profile error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
+
 
 // PUT /auth/password-reset (initiate via email/phone)
 export const passwordResetInitiate = expressAsyncHandler(async (req, res) => {
@@ -160,16 +193,43 @@ export const passwordChange = expressAsyncHandler(async (req, res) => {
 });
 
 
+// // POST /auth/refresh-token
+// export const refreshToken = expressAsyncHandler(async (req, res) => {
+//     const rt = req.cookies && req.cookies.refreshToken;
+//     if (!rt) return res.status(401).json({ error: 'Refresh token missing' });
+//     const entry = await AuthSvc.verifyRefreshToken(rt);
+//     const user = entry.user;
+//     // check passwordChangedAt
+//     if (user.passwordChangedAt && entry.createdAt < user.passwordChangedAt) {
+//         return res.status(401).json({ error: 'Token invalidated due to password change' });
+//     }
+//     const accessToken = AuthSvc.generateAccessToken(user);
+//     return res.json({ accessToken });
+// });
+
+// POST /auth/refresh-token
 // POST /auth/refresh-token
 export const refreshToken = expressAsyncHandler(async (req, res) => {
-    const rt = req.cookies && req.cookies.refreshToken;
-    if (!rt) return res.status(401).json({ error: 'Refresh token missing' });
+  const rt = req.cookies && req.cookies.refreshToken;
+  
+  if (!rt) {
+    return res.status(401).json({ error: 'Refresh token missing' });
+  }
+  
+  try {
     const entry = await AuthSvc.verifyRefreshToken(rt);
     const user = entry.user;
-    // check passwordChangedAt
+    
+    // Check if password was changed after token was issued
     if (user.passwordChangedAt && entry.createdAt < user.passwordChangedAt) {
-        return res.status(401).json({ error: 'Token invalidated due to password change' });
+      return res.status(401).json({ error: 'Token invalidated due to password change' });
     }
+    
     const accessToken = AuthSvc.generateAccessToken(user);
+    
     return res.json({ accessToken });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return res.status(401).json({ error: 'Invalid refresh token' });
+  }
 });

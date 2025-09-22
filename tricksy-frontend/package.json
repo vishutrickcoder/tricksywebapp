@@ -12,10 +12,18 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.9.0",
     "@tailwindcss/vite": "^4.1.13",
+    "@tiptap/extension-image": "^3.4.4",
+    "@tiptap/extension-link": "^3.4.4",
+    "@tiptap/react": "^3.4.4",
+    "@tiptap/starter-kit": "^3.4.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-grid-layout": "^1.5.2",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.1",
+    "slate": "^0.118.1",
+    "slate-history": "^0.113.1",
+    "slate-react": "^0.117.4",
     "tailwindcss": "^4.1.13"
   },
   "devDependencies": {

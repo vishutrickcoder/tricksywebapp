@@ -6,7 +6,8 @@ import xss from "xss";
 import rateLimit from 'express-rate-limit';
 import authRoutes from './api/v1/auth.routes.js'
 // import mongoSanitize from 'express-mongo-sanitize';
-
+import aboutRoutes from "./api/v1/about.route.js";
+import serviceRoutes from "./api/v1/services.routes.js";
 
 const app = express();
 app.use(helmet());
@@ -37,6 +38,8 @@ app.use(rateLimit({ windowMs: 60*1000, max: 300 }));
 
 // mount API
 app.use('/api/v1/auth', authRoutes);
+app.use("/api/about", aboutRoutes);
+app.use("/api/services", serviceRoutes);
 
 
 export default app;
