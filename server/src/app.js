@@ -12,6 +12,7 @@ import serviceRoutes from "./api/v1/services.routes.js";
 const app = express();
 
 // Security middlewares
+app.set('trust proxy', 1);
 app.use(helmet());
 app.use(
   cors({ 
